@@ -4,12 +4,18 @@
 ![Framework](https://img.shields.io/badge/Framework-Quart-black)
 ![Browser](https://img.shields.io/badge/Browser-Patchright%20%2B%20Camoufox-success)
 ![Captcha](https://img.shields.io/badge/Captcha-Cloudflare%20Turnstile-orange)
+![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF)
 ![License](https://img.shields.io/badge/License-Unspecified-lightgrey.svg)
+
 Production-oriented Cloudflare Turnstile solver API built with Quart, Patchright, and Camoufox.
 
 This repository is a cleaned, public-safe showcase of a real deployment. It preserves the core implementation and practical improvements while excluding runtime state, private infrastructure details, and local machine-specific configuration.
 
-## Features
+## Overview
+
+This project exposes a simple HTTP API for creating Turnstile solve tasks and polling their results. It is positioned as a backend automation component, not as a full end-user application.
+
+## Highlights
 
 - Async HTTP API powered by Quart
 - Concurrent browser worker pool
@@ -18,7 +24,7 @@ This repository is a cleaned, public-safe showcase of a real deployment. It pres
 - Optional proxy support via a local `proxies.txt`
 - SQLite result storage with WAL mode enabled
 - Automatic cleanup for older task results
-- Optional helper flow for pages that gate Turnstile behind an address/email step
+- Optional helper flow for pages that gate Turnstile behind an address or email step
 - Optional helper flow for pages that require clicking a verification trigger before the widget appears
 
 ## Public-safe scope
@@ -30,6 +36,15 @@ This showcase intentionally excludes:
 - runtime databases and logs
 - local secrets, private addresses, and machine-specific state
 
+## Tech stack
+
+- Python 3.10+
+- Quart
+- Patchright
+- Camoufox
+- aiosqlite
+- Rich
+
 ## Project layout
 
 - `api_solver.py` - main API server and solving workflow
@@ -38,6 +53,8 @@ This showcase intentionally excludes:
 - `requirements.txt` - Python dependencies
 - `proxies.example.txt` - example proxy list format
 - `.env.example` - optional environment configuration example
+- `docs/QUICKSTART.md` - copy-pasteable local setup path
+- `.github/workflows/python-ci.yml` - minimal CI smoke check
 
 ## Requirements
 
@@ -49,37 +66,18 @@ This showcase intentionally excludes:
   - Microsoft Edge
   - Camoufox
 
-## Installation
+## Quick start
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-```
-
-Install the browser runtime for the backend you plan to use.
-
-### Chromium
-
-```bash
 python -m patchright install chromium
+python api_solver.py --browser_type chromium --host 127.0.0.1 --port 5000
 ```
 
-### Google Chrome
-
-Install Chrome on your system, then run the API with `--browser_type chrome`.
-
-### Microsoft Edge
-
-```bash
-python -m patchright install msedge
-```
-
-### Camoufox
-
-```bash
-python -m camoufox fetch
-```
+Extended setup notes live in [`docs/QUICKSTART.md`](docs/QUICKSTART.md).
 
 ## Configuration
 
@@ -200,11 +198,19 @@ Failure response:
 }
 ```
 
-## Notes
+## Notes and limitations
 
 - The root route (`/`) serves a simple built-in usage page.
 - SQLite results are stored locally and are intentionally excluded from version control.
-- This repository is meant to present the source cleanly, not to mirror live runtime state.
+- The repository is meant to present the source cleanly, not to mirror live runtime state.
+- Browser runtime installation is still required outside `pip install -r requirements.txt`.
+- Some target sites may need the helper address/email step before the widget appears.
+
+## License status
+
+No explicit open-source license has been added yet.
+
+That is intentional for now. The repository owner should choose a license deliberately rather than guessing one during cleanup. Until then, treat the public code as visible source with no additional license grant.
 
 ## Responsible use
 
