@@ -54,6 +54,9 @@ This showcase intentionally excludes:
 - `proxies.example.txt` - example proxy list format
 - `.env.example` - optional environment configuration example
 - `docs/QUICKSTART.md` - copy-pasteable local setup path
+- `docs/USAGE.md` - request patterns, polling flow, and runtime options
+- `docs/ARCHITECTURE.md` - high-level component and request lifecycle map
+- `LICENSE-STATUS.md` - explicit current license state without guessing a license
 - `.github/workflows/python-ci.yml` - minimal CI smoke check
 
 ## Requirements
@@ -78,6 +81,11 @@ python api_solver.py --browser_type chromium --host 127.0.0.1 --port 5000
 ```
 
 Extended setup notes live in [`docs/QUICKSTART.md`](docs/QUICKSTART.md).
+
+Additional docs:
+
+- [`docs/USAGE.md`](docs/USAGE.md) for request examples and polling patterns
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the runtime/component overview
 
 ## Configuration
 
@@ -211,6 +219,8 @@ Failure response:
 No explicit open-source license has been added yet.
 
 That is intentional for now. The repository owner should choose a license deliberately rather than guessing one during cleanup. Until then, treat the public code as visible source with no additional license grant.
+
+See [`LICENSE-STATUS.md`](LICENSE-STATUS.md) for the explicit status note.
 
 ## Responsible use
 
