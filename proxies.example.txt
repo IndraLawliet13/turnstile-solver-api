@@ -1,0 +1,6 @@
+# Optional local proxy list. Keep real proxy credentials out of git.
+# Supported formats:
+# ip:port
+# ip:port:username:password
+# scheme://ip:port
+# scheme://username:password@ip:port
