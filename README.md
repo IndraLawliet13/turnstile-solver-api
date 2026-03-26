@@ -1,5 +1,10 @@
 # Turnstile Solver API
 
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
+![Framework](https://img.shields.io/badge/Framework-Quart-black)
+![Browser](https://img.shields.io/badge/Browser-Patchright%20%2B%20Camoufox-success)
+![Captcha](https://img.shields.io/badge/Captcha-Cloudflare%20Turnstile-orange)
+![License](https://img.shields.io/badge/License-Unspecified-lightgrey.svg)
 Production-oriented Cloudflare Turnstile solver API built with Quart, Patchright, and Camoufox.
 
 This repository is a cleaned, public-safe showcase of a real deployment. It preserves the core implementation and practical improvements while excluding runtime state, private infrastructure details, and local machine-specific configuration.
