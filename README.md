@@ -1,43 +1,44 @@
 # Turnstile Solver API
 
-A production-oriented Turnstile solver API built with Quart, Patchright, and Camoufox.
+Production-oriented Cloudflare Turnstile solver API built with Quart, Patchright, and Camoufox.
 
-This repository is a cleaned showcase version of a solver actively used in a VPS environment. It keeps the real implementation and local improvements while removing runtime artifacts, local state, and machine-specific deployment details.
+This repository is a cleaned, public-safe showcase of a real deployment. It preserves the core implementation and practical improvements while excluding runtime state, private infrastructure details, and local machine-specific configuration.
 
-## Highlights
+## Features
 
-- Async HTTP API with Quart
-- Multi-browser pool for concurrent solving
-- Support for Chromium, Chrome, Edge, and Camoufox
-- Random browser fingerprint rotation support
-- Optional proxy support via `proxies.txt`
-- SQLite result storage with WAL mode
-- Automatic cleanup of old task results
-- Optional helper flow for pages that require a preliminary address/email submission before the Turnstile widget appears
+- Async HTTP API powered by Quart
+- Concurrent browser worker pool
+- Support for `chromium`, `chrome`, `msedge`, and `camoufox`
+- Optional browser fingerprint rotation from a curated config pool
+- Optional proxy support via a local `proxies.txt`
+- SQLite result storage with WAL mode enabled
+- Automatic cleanup for older task results
+- Optional helper flow for pages that gate Turnstile behind an address/email step
+- Optional helper flow for pages that require clicking a verification trigger before the widget appears
 
-## What was customized beyond upstream
+## Public-safe scope
 
-Compared with the original upstream base, this version includes a real-world helper flow for targets that:
+This showcase intentionally excludes:
 
-- present an `address` input before verification, and/or
-- require clicking a verification trigger button before the Turnstile widget is rendered
+- live VPS deployment details
+- tunnel or reverse-proxy configuration
+- runtime databases and logs
+- local secrets, private addresses, and machine-specific state
 
-For public safety, the original local hardcoded login address was replaced with an environment variable.
-
-## Project structure
+## Project layout
 
 - `api_solver.py` - main API server and solving workflow
 - `browser_configs.py` - browser fingerprint configuration pool
 - `db_results.py` - SQLite persistence helpers
 - `requirements.txt` - Python dependencies
-- `proxies.txt` - optional proxy list, not committed with secrets
-- `.env.example` - example environment configuration
+- `proxies.example.txt` - example proxy list format
+- `.env.example` - optional environment configuration example
 
 ## Requirements
 
 - Python 3.10+
 - Linux, macOS, or Windows
-- One of the supported browser backends:
+- One supported browser backend:
   - Patchright Chromium
   - Google Chrome
   - Microsoft Edge
@@ -51,7 +52,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Install browser dependencies according to your chosen backend.
+Install the browser runtime for the backend you plan to use.
 
 ### Chromium
 
@@ -61,7 +62,7 @@ python -m patchright install chromium
 
 ### Google Chrome
 
-Install Chrome on your system, then run with `--browser_type chrome`.
+Install Chrome on your system, then run the API with `--browser_type chrome`.
 
 ### Microsoft Edge
 
@@ -77,7 +78,7 @@ python -m camoufox fetch
 
 ## Configuration
 
-Copy the example environment file if you need the optional login helper:
+If you need the optional address or email pre-submit helper flow:
 
 ```bash
 cp .env.example .env
@@ -85,9 +86,11 @@ cp .env.example .env
 
 Environment variables:
 
-- `TURNSTILE_LOGIN_ADDRESS` - optional address/email submitted to pages that gate verification behind an input named `address`
+- `TURNSTILE_LOGIN_ADDRESS` - optional value submitted to pages that gate verification behind an input named `address`
 
-If you use proxies, create `proxies.txt` locally. Supported formats:
+If you want proxy support, create a local `proxies.txt` file using one entry per line.
+
+Supported formats:
 
 ```text
 ip:port
@@ -95,6 +98,8 @@ ip:port:username:password
 scheme://ip:port
 scheme://username:password@ip:port
 ```
+
+A sample format file is included as `proxies.example.txt`.
 
 ## Running
 
@@ -104,7 +109,7 @@ Basic local run:
 python api_solver.py --browser_type chromium --host 127.0.0.1 --port 5000
 ```
 
-Example with Chrome and debug logs:
+Example with Chrome and debug logging:
 
 ```bash
 python api_solver.py --browser_type chrome --host 127.0.0.1 --port 5000 --debug
@@ -114,21 +119,21 @@ python api_solver.py --browser_type chrome --host 127.0.0.1 --port 5000 --debug
 
 | Argument | Description |
 | --- | --- |
-| `--no-headless` | Run browser with GUI |
-| `--useragent` | Custom user-agent string |
-| `--debug` | Enable verbose logs |
-| `--browser_type` | `chromium`, `chrome`, `msedge`, `camoufox` |
+| `--no-headless` | Run the browser with a visible UI |
+| `--useragent` | Provide a custom user-agent string |
+| `--debug` | Enable verbose logging |
+| `--browser_type` | Choose `chromium`, `chrome`, `msedge`, or `camoufox` |
 | `--thread` | Number of browser workers |
 | `--host` | Bind address |
-| `--port` | Bind port |
+| `--port` | Listening port |
 | `--proxy` | Enable proxy usage from `proxies.txt` |
-| `--random` | Randomize browser config from pool |
-| `--browser` | Explicit browser name from config pool |
-| `--version` | Explicit browser version from config pool |
+| `--random` | Randomize browser config from the bundled pool |
+| `--browser` | Select an explicit browser name from the config pool |
+| `--version` | Select an explicit browser version from the config pool |
 
 ## API
 
-### Create solve task
+### 1. Create a solve task
 
 ```http
 GET /turnstile?url=https://example.com&sitekey=0x4AAAAAAA
@@ -139,6 +144,12 @@ Optional query parameters:
 - `action`
 - `cdata`
 
+Example:
+
+```bash
+curl "http://127.0.0.1:5000/turnstile?url=https://example.com&sitekey=0x4AAAAAAA"
+```
+
 Example response:
 
 ```json
@@ -148,7 +159,7 @@ Example response:
 }
 ```
 
-### Poll result
+### 2. Poll the result
 
 ```http
 GET /result?id=d2cbb257-9c37-4f9c-9bc7-1eaee72d96a8
@@ -184,12 +195,12 @@ Failure response:
 }
 ```
 
-## Notes for deployment
+## Notes
 
-- The original live deployment may run behind a local tunnel or reverse proxy. Those machine-specific details are intentionally not included here.
-- SQLite result files, logs, caches, and compiled Python artifacts are excluded from version control.
-- This repository is intended as a clean source showcase, not a dump of live runtime state.
+- The root route (`/`) serves a simple built-in usage page.
+- SQLite results are stored locally and are intentionally excluded from version control.
+- This repository is meant to present the source cleanly, not to mirror live runtime state.
 
-## Disclaimer
+## Responsible use
 
-Use responsibly and only where you are authorized to automate or test.
+Use this project only where you are authorized to automate, test, or evaluate the target flow.
