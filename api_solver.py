@@ -73,7 +73,6 @@ class TurnstileAPIServer:
         self.browser_name = browser_name
         self.browser_version = browser_version
         self.console = Console()
-        self.login_address = os.getenv("TURNSTILE_LOGIN_ADDRESS", "").strip()
         
         # Initialize useragent and sec_ch_ua attributes
         self.useragent = useragent
@@ -107,15 +106,20 @@ class TurnstileAPIServer:
         self.console.clear()
         
         combined_text = Text()
-        combined_text.append("\nHigh-throughput Turnstile solver API", style="bold white")
-        combined_text.append("\nRuntime: Quart + Patchright/Camoufox", style="cyan")
-        combined_text.append("\nStorage: SQLite (WAL mode)", style="cyan")
+        combined_text.append("\n📢 Channel: ", style="bold white")
+        combined_text.append("https://t.me/D3_vin", style="cyan")
+        combined_text.append("\n💬 Chat: ", style="bold white")
+        combined_text.append("https://t.me/D3vin_chat", style="cyan")
+        combined_text.append("\n📁 GitHub: ", style="bold white")
+        combined_text.append("https://github.com/D3-vin", style="cyan")
+        combined_text.append("\n📁 Version: ", style="bold white")
+        combined_text.append("1.2b", style="green")
         combined_text.append("\n")
 
         info_panel = Panel(
             Align.left(combined_text),
-            title="[bold blue]Turnstile Solver API[/bold blue]",
-            subtitle="[bold magenta]Showcase Build[/bold magenta]",
+            title="[bold blue]Turnstile Solver[/bold blue]",
+            subtitle="[bold magenta]Dev by D3vin[/bold magenta]",
             box=box.ROUNDED,
             border_style="bright_blue",
             padding=(0, 1),
@@ -639,45 +643,54 @@ class TurnstileAPIServer:
             await self._unblock_rendering(page)
 
             try:
-                # Optional auto-login for sites that gate Turnstile behind an address/email step
+                # Cek apakah ada input address (Tanda kita di halaman Login)
                 login_input = page.locator('input[name="address"]')
-                if self.login_address and await login_input.count() > 0 and await login_input.is_visible():
+                if await login_input.count() > 0 and await login_input.is_visible():
                     if self.debug:
-                        logger.debug(f"Browser {index}: Login page detected, submitting configured TURNSTILE_LOGIN_ADDRESS")
+                        logger.debug(f"Browser {index}: Terdeteksi halaman LOGIN. Melakukan auto-login...")
                     
-                    await login_input.fill(self.login_address)
+                    # Masukkan Email FaucetPay kamu
+                    await login_input.fill("lvtsundere@gmail.com")
                     await asyncio.sleep(0.5)
+                    
+                    # Klik tombol Verify & Claim / Login
+                    # Mencari tombol submit di dalam form
                     await page.locator('button[type="submit"]').click()
                     
+                    # Tunggu loading halaman setelah login
                     if self.debug:
-                        logger.debug(f"Browser {index}: Login submitted, waiting for verification page")
+                        logger.debug(f"Browser {index}: Login dikirim, menunggu halaman Verifikasi...")
                     await page.wait_for_load_state('domcontentloaded')
-                    await asyncio.sleep(3)
+                    await asyncio.sleep(3) # Tunggu render ulang
             except Exception as e:
                 if self.debug:
-                    logger.debug(f"Browser {index}: Optional login flow info: {e}")
+                    logger.debug(f"Browser {index}: Info Login flow: {e}")
 
-            # Optional helper for sites that require clicking a verification trigger first
+            # ==============================================================================
+            # [FIX 2] AUTO-CLICKER "LOAD SECURITY VERIFICATION"
+            # ==============================================================================
             try:
+                # Tombol ini hanya ada di halaman Verifikasi (setelah login)
                 buttons = [
-                    '#load-turnstile-btn',
+                    '#load-turnstile-btn',                    # ID SolaSeek
                     'button:has-text("Load Security Verification")',
                     'button:has-text("Click to verify")',
-                    '.btn-primary-modern:has-text("Security")'
+                    '.btn-primary-modern:has-text("Security")' 
                 ]
 
                 for btn in buttons:
                     if await page.locator(btn).count() > 0:
                         if await page.locator(btn).is_visible():
                             if self.debug:
-                                logger.debug(f"Browser {index}: Verification trigger found ({btn}), clicking...")
+                                logger.debug(f"Browser {index}: Tombol Load Captcha ditemukan ({btn}). Mengklik...")
                             
+                            # Klik tombol untuk memunculkan widget
                             await page.locator(btn).click(force=True)
-                            await asyncio.sleep(4)
+                            await asyncio.sleep(4) # Wajib tunggu widget Turnstile loading animasi
                             break
             except Exception as e:
                 if self.debug:
-                    logger.debug(f"Browser {index}: Optional click flow info: {e}")
+                    logger.debug(f"Browser {index}: Info Click flow: {e}")
 
             # Ждем немного времени для загрузки CAPTCHA
             await asyncio.sleep(3)
@@ -920,11 +933,23 @@ class TurnstileAPIServer:
 
 
                     <div class="bg-gray-700 p-4 rounded-lg mb-6">
-                        <p class="text-gray-200 font-semibold mb-3">Deployment notes</p>
-                        <div class="space-y-2 text-sm text-gray-300">
-                            <p>Use <code class="bg-gray-800 px-2 py-1 rounded">/turnstile</code> to create a solve task and <code class="bg-gray-800 px-2 py-1 rounded">/result</code> to poll its status.</p>
-                            <p>If your target page requires an address/email field before the widget appears, set <code class="bg-gray-800 px-2 py-1 rounded">TURNSTILE_LOGIN_ADDRESS</code>.</p>
-                            <p>Run behind a reverse proxy or tunnel if you need public access.</p>
+                        <p class="text-gray-200 font-semibold mb-3">📢 Connect with Us</p>
+                        <div class="space-y-2 text-sm">
+                            <p class="text-gray-300">
+                                📢 <strong>Channel:</strong> 
+                                <a href="https://t.me/D3_vin" class="text-red-300 hover:underline">https://t.me/D3_vin</a> 
+                                - Latest updates and releases
+                            </p>
+                            <p class="text-gray-300">
+                                💬 <strong>Chat:</strong> 
+                                <a href="https://t.me/D3vin_chat" class="text-red-300 hover:underline">https://t.me/D3vin_chat</a> 
+                                - Community support and discussions
+                            </p>
+                            <p class="text-gray-300">
+                                📁 <strong>GitHub:</strong> 
+                                <a href="https://github.com/D3-vin" class="text-red-300 hover:underline">https://github.com/D3-vin</a> 
+                                - Source code and development
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -941,7 +966,7 @@ def parse_args():
     parser.add_argument('--useragent', type=str, help='User-Agent string (if not specified, random configuration is used)')
     parser.add_argument('--debug', action='store_true', help='Enable or disable debug mode for additional logging and troubleshooting information (default: False)')
     parser.add_argument('--browser_type', type=str, default='chromium', help='Specify the browser type for the solver. Supported options: chromium, chrome, msedge, camoufox (default: chromium)')
-    parser.add_argument('--thread', type=int, default=4, help='Set the number of browser threads to use for multi-threaded mode. Increasing this will speed up execution but requires more resources (default: 1)')
+    parser.add_argument('--thread', type=int, default=2, help='Set the number of browser threads to use for multi-threaded mode. Increasing this will speed up execution but requires more resources (default: 2)')
     parser.add_argument('--proxy', action='store_true', help='Enable proxy support for the solver (Default: False)')
     parser.add_argument('--random', action='store_true', help='Use random User-Agent and Sec-CH-UA configuration from pool')
     parser.add_argument('--browser', type=str, help='Specify browser name to use (e.g., chrome, firefox)')
