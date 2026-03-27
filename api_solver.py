@@ -73,6 +73,7 @@ class TurnstileAPIServer:
         self.browser_name = browser_name
         self.browser_version = browser_version
         self.console = Console()
+        self.login_address = os.getenv("TURNSTILE_LOGIN_ADDRESS", "").strip()
         
         # Initialize useragent and sec_ch_ua attributes
         self.useragent = useragent
@@ -106,20 +107,15 @@ class TurnstileAPIServer:
         self.console.clear()
         
         combined_text = Text()
-        combined_text.append("\n📢 Channel: ", style="bold white")
-        combined_text.append("https://t.me/D3_vin", style="cyan")
-        combined_text.append("\n💬 Chat: ", style="bold white")
-        combined_text.append("https://t.me/D3vin_chat", style="cyan")
-        combined_text.append("\n📁 GitHub: ", style="bold white")
-        combined_text.append("https://github.com/D3-vin", style="cyan")
-        combined_text.append("\n📁 Version: ", style="bold white")
-        combined_text.append("1.2b", style="green")
+        combined_text.append("\nHigh-throughput Turnstile solver API", style="bold white")
+        combined_text.append("\nRuntime: Quart + Patchright/Camoufox", style="cyan")
+        combined_text.append("\nStorage: SQLite (WAL mode)", style="cyan")
         combined_text.append("\n")
 
         info_panel = Panel(
             Align.left(combined_text),
-            title="[bold blue]Turnstile Solver[/bold blue]",
-            subtitle="[bold magenta]Dev by D3vin[/bold magenta]",
+            title="[bold blue]Turnstile Solver API[/bold blue]",
+            subtitle="[bold magenta]Showcase Build[/bold magenta]",
             box=box.ROUNDED,
             border_style="bright_blue",
             padding=(0, 1),
@@ -643,54 +639,45 @@ class TurnstileAPIServer:
             await self._unblock_rendering(page)
 
             try:
-                # Cek apakah ada input address (Tanda kita di halaman Login)
+                # Optional auto-login for sites that gate Turnstile behind an address/email step
                 login_input = page.locator('input[name="address"]')
-                if await login_input.count() > 0 and await login_input.is_visible():
+                if self.login_address and await login_input.count() > 0 and await login_input.is_visible():
                     if self.debug:
-                        logger.debug(f"Browser {index}: Terdeteksi halaman LOGIN. Melakukan auto-login...")
+                        logger.debug(f"Browser {index}: Login page detected, submitting configured TURNSTILE_LOGIN_ADDRESS")
                     
-                    # Masukkan Email FaucetPay kamu
-                    await login_input.fill("lvtsundere@gmail.com")
+                    await login_input.fill(self.login_address)
                     await asyncio.sleep(0.5)
-                    
-                    # Klik tombol Verify & Claim / Login
-                    # Mencari tombol submit di dalam form
                     await page.locator('button[type="submit"]').click()
                     
-                    # Tunggu loading halaman setelah login
                     if self.debug:
-                        logger.debug(f"Browser {index}: Login dikirim, menunggu halaman Verifikasi...")
+                        logger.debug(f"Browser {index}: Login submitted, waiting for verification page")
                     await page.wait_for_load_state('domcontentloaded')
-                    await asyncio.sleep(3) # Tunggu render ulang
+                    await asyncio.sleep(3)
             except Exception as e:
                 if self.debug:
-                    logger.debug(f"Browser {index}: Info Login flow: {e}")
+                    logger.debug(f"Browser {index}: Optional login flow info: {e}")
 
-            # ==============================================================================
-            # [FIX 2] AUTO-CLICKER "LOAD SECURITY VERIFICATION"
-            # ==============================================================================
+            # Optional helper for sites that require clicking a verification trigger first
             try:
-                # Tombol ini hanya ada di halaman Verifikasi (setelah login)
                 buttons = [
-                    '#load-turnstile-btn',                    # ID SolaSeek
+                    '#load-turnstile-btn',
                     'button:has-text("Load Security Verification")',
                     'button:has-text("Click to verify")',
-                    '.btn-primary-modern:has-text("Security")' 
+                    '.btn-primary-modern:has-text("Security")'
                 ]
 
                 for btn in buttons:
                     if await page.locator(btn).count() > 0:
                         if await page.locator(btn).is_visible():
                             if self.debug:
-                                logger.debug(f"Browser {index}: Tombol Load Captcha ditemukan ({btn}). Mengklik...")
+                                logger.debug(f"Browser {index}: Verification trigger found ({btn}), clicking...")
                             
-                            # Klik tombol untuk memunculkan widget
                             await page.locator(btn).click(force=True)
-                            await asyncio.sleep(4) # Wajib tunggu widget Turnstile loading animasi
+                            await asyncio.sleep(4)
                             break
             except Exception as e:
                 if self.debug:
-                    logger.debug(f"Browser {index}: Info Click flow: {e}")
+                    logger.debug(f"Browser {index}: Optional click flow info: {e}")
 
             # Ждем немного времени для загрузки CAPTCHA
             await asyncio.sleep(3)
@@ -933,23 +920,11 @@ class TurnstileAPIServer:
 
 
                     <div class="bg-gray-700 p-4 rounded-lg mb-6">
-                        <p class="text-gray-200 font-semibold mb-3">📢 Connect with Us</p>
-                        <div class="space-y-2 text-sm">
-                            <p class="text-gray-300">
-                                📢 <strong>Channel:</strong> 
-                                <a href="https://t.me/D3_vin" class="text-red-300 hover:underline">https://t.me/D3_vin</a> 
-                                - Latest updates and releases
-                            </p>
-                            <p class="text-gray-300">
-                                💬 <strong>Chat:</strong> 
-                                <a href="https://t.me/D3vin_chat" class="text-red-300 hover:underline">https://t.me/D3vin_chat</a> 
-                                - Community support and discussions
-                            </p>
-                            <p class="text-gray-300">
-                                📁 <strong>GitHub:</strong> 
-                                <a href="https://github.com/D3-vin" class="text-red-300 hover:underline">https://github.com/D3-vin</a> 
-                                - Source code and development
-                            </p>
+                        <p class="text-gray-200 font-semibold mb-3">Deployment notes</p>
+                        <div class="space-y-2 text-sm text-gray-300">
+                            <p>Use <code class="bg-gray-800 px-2 py-1 rounded">/turnstile</code> to create a solve task and <code class="bg-gray-800 px-2 py-1 rounded">/result</code> to poll its status.</p>
+                            <p>If your target page requires an address/email field before the widget appears, set <code class="bg-gray-800 px-2 py-1 rounded">TURNSTILE_LOGIN_ADDRESS</code>.</p>
+                            <p>Run behind a reverse proxy or tunnel if you need public access.</p>
                         </div>
                     </div>
                 </div>
