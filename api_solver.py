@@ -134,6 +134,8 @@ class TurnstileAPIServer:
         self.app.route('/turnstile', methods=['GET'])(self.process_turnstile)
         self.app.route('/result', methods=['GET'])(self.get_result)
         self.app.route('/')(self.index)
+        self.app.route('/docs')(self.index)
+        self.app.route('/docs/')(self.index)
         
 
     async def _startup(self) -> None:
