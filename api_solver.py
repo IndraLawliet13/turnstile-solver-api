@@ -481,7 +481,7 @@ class TurnstileAPIServer:
         if self.debug:
             logger.debug(f"Browser {index}: Created CAPTCHA overlay with sitekey: {websiteKey}")
 
-    async def _solve_turnstile(self, task_id: str, url: str, sitekey: str, action: Optional[str] = None, cdata: Optional[str] = None):
+    async def _solve_turnstile(self, task_id: str, url: str, sitekey: str, action: Optional[str] = None, cdata: Optional[str] = None, request_proxy: Optional[str] = None):
         """Solve the Turnstile challenge."""
         proxy = None
 
@@ -501,23 +501,28 @@ class TurnstileAPIServer:
         if self.proxy_support:
             proxy_file_path = os.path.join(os.getcwd(), "proxies.txt")
 
-            try:
-                with open(proxy_file_path) as proxy_file:
-                    proxies = [line.strip() for line in proxy_file if line.strip()]
+            if request_proxy:
+                proxy = request_proxy.strip()
+                if self.debug:
+                    logger.debug(f"Browser {index}: Using request proxy: {proxy}")
+            else:
+                try:
+                    with open(proxy_file_path) as proxy_file:
+                        proxies = [line.strip() for line in proxy_file if line.strip()]
 
-                proxy = random.choice(proxies) if proxies else None
-                
-                if self.debug and proxy:
-                    logger.debug(f"Browser {index}: Selected proxy: {proxy}")
-                elif self.debug and not proxy:
-                    logger.debug(f"Browser {index}: No proxies available")
+                    proxy = random.choice(proxies) if proxies else None
                     
-            except FileNotFoundError:
-                logger.warning(f"Proxy file not found: {proxy_file_path}")
-                proxy = None
-            except Exception as e:
-                logger.error(f"Error reading proxy file: {str(e)}")
-                proxy = None
+                    if self.debug and proxy:
+                        logger.debug(f"Browser {index}: Selected proxy: {proxy}")
+                    elif self.debug and not proxy:
+                        logger.debug(f"Browser {index}: No proxies available")
+                        
+                except FileNotFoundError:
+                    logger.warning(f"Proxy file not found: {proxy_file_path}")
+                    proxy = None
+                except Exception as e:
+                    logger.error(f"Error reading proxy file: {str(e)}")
+                    proxy = None
 
             if proxy:
                 if '@' in proxy:
@@ -810,6 +815,7 @@ class TurnstileAPIServer:
         sitekey = request.args.get('sitekey')
         action = request.args.get('action')
         cdata = request.args.get('cdata')
+        request_proxy = request.args.get('proxy')
 
         if not url or not sitekey:
             return jsonify({
@@ -825,11 +831,12 @@ class TurnstileAPIServer:
             "url": url,
             "sitekey": sitekey,
             "action": action,
-            "cdata": cdata
+            "cdata": cdata,
+            "proxy": request_proxy
         })
 
         try:
-            asyncio.create_task(self._solve_turnstile(task_id=task_id, url=url, sitekey=sitekey, action=action, cdata=cdata))
+            asyncio.create_task(self._solve_turnstile(task_id=task_id, url=url, sitekey=sitekey, action=action, cdata=cdata, request_proxy=request_proxy))
 
             if self.debug:
                 logger.debug(f"Request completed with taskid {task_id}.")
