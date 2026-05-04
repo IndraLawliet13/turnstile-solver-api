@@ -7,6 +7,7 @@ import logging
 import asyncio
 from typing import Optional, Union
 import argparse
+from urllib.parse import urlparse, unquote
 from quart import Quart, request, jsonify
 from camoufox.async_api import AsyncCamoufox
 from patchright.async_api import async_playwright
@@ -57,6 +58,79 @@ logger = logging.getLogger("TurnstileAPIServer")
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler(sys.stdout)
 logger.addHandler(handler)
+
+
+def _mask_secret(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    if len(value) <= 2:
+        return "**"
+    return f"{value[:1]}***{value[-1:]}"
+
+
+def parse_proxy_config(proxy: str) -> dict:
+    """Convert supported proxy formats into Patchright/Playwright context config.
+
+    Supported formats:
+    - ip:port
+    - ip:port:username:password
+    - scheme://ip:port
+    - scheme://username:password@ip:port
+    - scheme:ip:port:username:password, kept for backward compatibility
+    """
+    raw_proxy = (proxy or "").strip()
+    if not raw_proxy:
+        raise ValueError("Invalid proxy format")
+
+    if "://" in raw_proxy:
+        parsed = urlparse(raw_proxy)
+        if not parsed.scheme or not parsed.hostname or not parsed.port:
+            raise ValueError("Invalid proxy format")
+
+        config = {"server": f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"}
+        if parsed.username is not None:
+            config["username"] = unquote(parsed.username)
+        if parsed.password is not None:
+            config["password"] = unquote(parsed.password)
+        return config
+
+    parts = raw_proxy.split(":")
+    if len(parts) == 2:
+        host, port = parts
+        if not host or not port:
+            raise ValueError("Invalid proxy format")
+        return {"server": f"http://{host}:{port}"}
+
+    if len(parts) == 4:
+        host, port, username, password = parts
+        if not host or not port or not username:
+            raise ValueError("Invalid proxy format")
+        return {
+            "server": f"http://{host}:{port}",
+            "username": username,
+            "password": password,
+        }
+
+    if len(parts) == 5:
+        scheme, host, port, username, password = parts
+        if not scheme or not host or not port or not username:
+            raise ValueError("Invalid proxy format")
+        return {
+            "server": f"{scheme}://{host}:{port}",
+            "username": username,
+            "password": password,
+        }
+
+    raise ValueError("Invalid proxy format")
+
+
+def redact_proxy_config(proxy_config: Optional[dict]) -> str:
+    if not proxy_config:
+        return "none"
+    username = proxy_config.get("username")
+    if username:
+        return f"{proxy_config.get('server')} (auth: {_mask_secret(username)}:***)"
+    return str(proxy_config.get("server"))
 
 
 class TurnstileAPIServer:
@@ -498,25 +572,27 @@ class TurnstileAPIServer:
             if self.debug:
                 logger.warning(f"Browser {index}: Cannot check browser state: {str(e)}")
 
-        if self.proxy_support:
-            proxy_file_path = os.path.join(os.getcwd(), "proxies.txt")
+        start_time = time.time()
+        context = None
+        proxy_file_path = os.path.join(os.getcwd(), "proxies.txt")
 
+        try:
             if request_proxy:
                 proxy = request_proxy.strip()
                 if self.debug:
-                    logger.debug(f"Browser {index}: Using request proxy: {proxy}")
-            else:
+                    logger.debug("Browser %s: Using request-level proxy override", index)
+            elif self.proxy_support:
                 try:
                     with open(proxy_file_path) as proxy_file:
                         proxies = [line.strip() for line in proxy_file if line.strip()]
 
                     proxy = random.choice(proxies) if proxies else None
-                    
+
                     if self.debug and proxy:
-                        logger.debug(f"Browser {index}: Selected proxy: {proxy}")
+                        logger.debug(f"Browser {index}: Selected proxy from file")
                     elif self.debug and not proxy:
                         logger.debug(f"Browser {index}: No proxies available")
-                        
+
                 except FileNotFoundError:
                     logger.warning(f"Proxy file not found: {proxy_file_path}")
                     proxy = None
@@ -524,91 +600,34 @@ class TurnstileAPIServer:
                     logger.error(f"Error reading proxy file: {str(e)}")
                     proxy = None
 
-            if proxy:
-                if '@' in proxy:
-                    try:
-                        scheme_part, auth_part = proxy.split('://')
-                        auth, address = auth_part.split('@')
-                        username, password = auth.split(':')
-                        ip, port = address.split(':')
-                        if self.debug:
-                            logger.debug(f"Browser {index}: Creating context with proxy {scheme_part}://{ip}:{port} (auth: {username}:***)")
-                        context_options = {
-                            "proxy": {
-                                "server": f"{scheme_part}://{ip}:{port}",
-                                "username": username,
-                                "password": password
-                            },
-                            "user_agent": browser_config['useragent']
-                        }
-                        
-                        if browser_config['sec_ch_ua'] and browser_config['sec_ch_ua'].strip():
-                            context_options['extra_http_headers'] = {
-                                'sec-ch-ua': browser_config['sec_ch_ua']
-                            }
-                        
-                        context = await browser.new_context(**context_options)
-                    except ValueError:
-                        raise ValueError(f"Invalid proxy format: {proxy}")
-                else:
-                    parts = proxy.split(':')
-                    if len(parts) == 5:
-                        proxy_scheme, proxy_ip, proxy_port, proxy_user, proxy_pass = parts
-                        if self.debug:
-                            logger.debug(f"Browser {index}: Creating context with proxy {proxy_scheme}://{proxy_ip}:{proxy_port} (auth: {proxy_user}:***)")
-                        context_options = {
-                            "proxy": {
-                                "server": f"{proxy_scheme}://{proxy_ip}:{proxy_port}",
-                                "username": proxy_user,
-                                "password": proxy_pass
-                            },
-                            "user_agent": browser_config['useragent']
-                        }
-                        
-                        if browser_config['sec_ch_ua'] and browser_config['sec_ch_ua'].strip():
-                            context_options['extra_http_headers'] = {
-                                'sec-ch-ua': browser_config['sec_ch_ua']
-                            }
-                        
-                        context = await browser.new_context(**context_options)
-                    elif len(parts) == 3:
-                        if self.debug:
-                            logger.debug(f"Browser {index}: Creating context with proxy {proxy}")
-                        context_options = {
-                            "proxy": {"server": f"{proxy}"},
-                            "user_agent": browser_config['useragent']
-                        }
-                        
-                        if browser_config['sec_ch_ua'] and browser_config['sec_ch_ua'].strip():
-                            context_options['extra_http_headers'] = {
-                                'sec-ch-ua': browser_config['sec_ch_ua']
-                            }
-                        
-                        context = await browser.new_context(**context_options)
-                    else:
-                        raise ValueError(f"Invalid proxy format: {proxy}")
-            else:
-                if self.debug:
-                    logger.debug(f"Browser {index}: Creating context without proxy")
-                context_options = {"user_agent": browser_config['useragent']}
-                
-                if browser_config['sec_ch_ua'] and browser_config['sec_ch_ua'].strip():
-                    context_options['extra_http_headers'] = {
-                        'sec-ch-ua': browser_config['sec_ch_ua']
-                    }
-                
-                context = await browser.new_context(**context_options)
-        else:
             context_options = {"user_agent": browser_config['useragent']}
-            
+
             if browser_config['sec_ch_ua'] and browser_config['sec_ch_ua'].strip():
                 context_options['extra_http_headers'] = {
                     'sec-ch-ua': browser_config['sec_ch_ua']
                 }
-            
-            context = await browser.new_context(**context_options)
 
-        page = await context.new_page()
+            if proxy:
+                proxy_config = parse_proxy_config(proxy)
+                context_options["proxy"] = proxy_config
+                if self.debug:
+                    logger.debug(f"Browser {index}: Creating context with proxy {redact_proxy_config(proxy_config)}")
+            elif self.debug:
+                logger.debug(f"Browser {index}: Creating context without proxy")
+
+            context = await browser.new_context(**context_options)
+            page = await context.new_page()
+        except Exception as e:
+            elapsed_time = round(time.time() - start_time, 3)
+            await save_result(task_id, "turnstile", {"value": "CAPTCHA_FAIL", "elapsed_time": elapsed_time})
+            logger.error(f"Browser {index}: Failed to create browser context: {str(e)}")
+            try:
+                if hasattr(browser, 'is_connected') and browser.is_connected():
+                    await self.browser_pool.put((index, browser, browser_config))
+            except Exception as pool_error:
+                if self.debug:
+                    logger.warning(f"Browser {index}: Error returning browser after context failure: {str(pool_error)}")
+            return
         
         #await self._antishadow_inject(page)
         
@@ -631,11 +650,9 @@ class TurnstileAPIServer:
             if self.debug:
                 logger.debug(f"Browser {index}: Set viewport size to 500x240")
 
-        start_time = time.time()
-
         try:
             if self.debug:
-                logger.debug(f"Browser {index}: Starting Turnstile solve for URL: {url} with Sitekey: {sitekey} | Action: {action} | Cdata: {cdata} | Proxy: {proxy}")
+                logger.debug(f"Browser {index}: Starting Turnstile solve for URL: {url} with Sitekey: {sitekey} | Action: {action} | Cdata: {cdata} | Proxy: {'provided' if proxy else 'none'}")
                 logger.debug(f"Browser {index}: Setting up optimized page loading with resource blocking")
 
             if self.debug:
@@ -785,9 +802,10 @@ class TurnstileAPIServer:
                 logger.debug(f"Browser {index}: Closing browser context and cleaning up")
             
             try:
-                await context.close()
-                if self.debug:
-                    logger.debug(f"Browser {index}: Context closed successfully")
+                if context:
+                    await context.close()
+                    if self.debug:
+                        logger.debug(f"Browser {index}: Context closed successfully")
             except Exception as e:
                 if self.debug:
                     logger.warning(f"Browser {index}: Error closing context: {str(e)}")
@@ -832,7 +850,7 @@ class TurnstileAPIServer:
             "sitekey": sitekey,
             "action": action,
             "cdata": cdata,
-            "proxy": request_proxy
+            "proxy": "provided" if request_proxy else None
         })
 
         try:

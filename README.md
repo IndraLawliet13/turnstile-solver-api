@@ -16,6 +16,7 @@ This repository is a cleaned, public-safe showcase of a real deployment. It pres
 - Support for `chromium`, `chrome`, `msedge`, and `camoufox`
 - Optional browser fingerprint rotation from a curated config pool
 - Optional proxy support via a local `proxies.txt`
+- Per-task proxy override with safe redacted logging
 - SQLite result storage with WAL mode enabled
 - Automatic cleanup for older task results
 - Optional helper flow for pages that gate Turnstile behind an address/email step
@@ -148,11 +149,18 @@ Optional query parameters:
 
 - `action`
 - `cdata`
+- `proxy` - per-task proxy override. This works even when the server was not started with `--proxy`; `--proxy` is only needed for random selection from local `proxies.txt`.
 
 Example:
 
 ```bash
 curl "http://127.0.0.1:5000/turnstile?url=https://example.com&sitekey=0x4AAAAAAA"
+```
+
+Example with a per-task proxy:
+
+```bash
+curl "http://127.0.0.1:5000/turnstile?url=https://example.com&sitekey=0x4AAAAAAA&proxy=http://user:pass@127.0.0.1:8080"
 ```
 
 Example response:

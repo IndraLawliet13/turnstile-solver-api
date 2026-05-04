@@ -53,11 +53,18 @@ Some Turnstile integrations also use extra widget context.
 
 - `action`
 - `cdata`
+- `proxy` - per-task proxy override. This does not require the server-level `--proxy` flag.
 
 Example:
 
 ```bash
 curl "http://127.0.0.1:5000/turnstile?url=https://example.com/login&sitekey=0x4AAAAAAA&action=login&cdata=session123"
+```
+
+Example with a per-task proxy:
+
+```bash
+curl "http://127.0.0.1:5000/turnstile?url=https://example.com/login&sitekey=0x4AAAAAAA&proxy=socks5://127.0.0.1:9050"
 ```
 
 ## Poll the result
@@ -147,7 +154,7 @@ The implementation also includes a helper path for pages that require clicking a
 
 ### Proxy list
 
-If you start the server with `--proxy`, create a local `proxies.txt` file first:
+If you start the server with `--proxy`, create a local `proxies.txt` file first. If you pass `proxy=` in the `/turnstile` request, that request-level proxy overrides the file selection for that task only.
 
 ```text
 ip:port
@@ -155,6 +162,8 @@ ip:port:username:password
 scheme://ip:port
 scheme://username:password@ip:port
 ```
+
+The same formats are accepted by the request-level `proxy` parameter. Proxy credentials are redacted in debug logs and only recorded as `provided` in task metadata.
 
 ## CLI reference
 
