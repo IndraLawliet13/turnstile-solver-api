@@ -151,6 +151,505 @@ def validate_target_url(url: Optional[str]) -> bool:
         return False
 
 
+def get_openapi_spec() -> Dict[str, Any]:
+    """Generate the OpenAPI 3.0.3 specification dictionary for Turnstile Solver API."""
+    return {
+        "openapi": "3.0.3",
+        "info": {
+            "title": "Turnstile & Cloudflare Solver API",
+            "version": "1.2.0",
+            "description": "High-throughput asynchronous API solver for Cloudflare Turnstile CAPTCHA widgets and Cloudflare Interstitial / IUAM / cf_clearance challenges.",
+            "contact": {
+                "name": "Turnstile Solver Team"
+            },
+            "license": {
+                "name": "MIT"
+            }
+        },
+        "servers": [
+            {
+                "url": "/",
+                "description": "Current Server"
+            }
+        ],
+        "paths": {
+            "/": {
+                "get": {
+                    "summary": "Welcome & Quickstart Guide",
+                    "description": "Serves the dashboard landing page HTML with live endpoint documentation and links to interactive Swagger UI.",
+                    "responses": {
+                        "200": {
+                            "description": "HTML Dashboard Landing Page",
+                            "content": {
+                                "text/html": {
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/turnstile": {
+                "get": {
+                    "summary": "Create Turnstile Solve Task",
+                    "description": "Enqueues an asynchronous Cloudflare Turnstile widget solving job using fast route-intercept or full-page execution.",
+                    "parameters": [
+                        {
+                            "name": "url",
+                            "in": "query",
+                            "required": True,
+                            "description": "Target website URL containing Cloudflare Turnstile widget (e.g. https://example.com/login). Must use http or https scheme.",
+                            "schema": {
+                                "type": "string",
+                                "format": "uri",
+                                "example": "https://example.com/login"
+                            }
+                        },
+                        {
+                            "name": "sitekey",
+                            "in": "query",
+                            "required": True,
+                            "description": "Cloudflare Turnstile sitekey (e.g. 0x4AAAAAAAJ5XXXXXXXXX).",
+                            "schema": {
+                                "type": "string",
+                                "example": "0x4AAAAAAAJ5XXXXXXXXX"
+                            }
+                        },
+                        {
+                            "name": "action",
+                            "in": "query",
+                            "required": False,
+                            "description": "Optional Turnstile action parameter bound to the widget.",
+                            "schema": {
+                                "type": "string",
+                                "example": "login"
+                            }
+                        },
+                        {
+                            "name": "cdata",
+                            "in": "query",
+                            "required": False,
+                            "description": "Optional Turnstile customer data (cdata) payload.",
+                            "schema": {
+                                "type": "string",
+                                "example": "session_context_data"
+                            }
+                        },
+                        {
+                            "name": "proxy",
+                            "in": "query",
+                            "required": False,
+                            "description": "Optional custom proxy string (ip:port, ip:port:user:pass, or scheme://user:pass@ip:port).",
+                            "schema": {
+                                "type": "string",
+                                "example": "http://user:pass@127.0.0.1:8080"
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Task creation response or parameter validation error payload (compatible with 2captcha/CapSolver schema).",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/TaskCreatedResponse"
+                                    },
+                                    "examples": {
+                                        "success": {
+                                            "summary": "Task created successfully",
+                                            "value": {
+                                                "errorId": 0,
+                                                "taskId": "7a35e4d2-f67b-402e-9d22-26cbdb6f890a"
+                                            }
+                                        },
+                                        "missing_url": {
+                                            "summary": "Missing URL parameter",
+                                            "value": {
+                                                "errorId": 1,
+                                                "errorCode": "ERROR_WRONG_PAGEURL",
+                                                "errorDescription": "Both 'url' and 'sitekey' are required, and 'url' must have a valid http/https scheme"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/cf_clearance": {
+                "get": {
+                    "summary": "Create Cloudflare Clearance (IUAM) Solve Task",
+                    "description": "Enqueues an asynchronous Cloudflare IUAM/interstitial clearance solver task to extract session cf_clearance cookies, User-Agent, and browser fingerprint headers.",
+                    "parameters": [
+                        {
+                            "name": "url",
+                            "in": "query",
+                            "required": True,
+                            "description": "Target website URL protected by Cloudflare IUAM / 5-second challenge.",
+                            "schema": {
+                                "type": "string",
+                                "format": "uri",
+                                "example": "https://protected-site.com"
+                            }
+                        },
+                        {
+                            "name": "proxy",
+                            "in": "query",
+                            "required": False,
+                            "description": "Optional custom proxy string (ip:port, ip:port:user:pass, or scheme://user:pass@ip:port).",
+                            "schema": {
+                                "type": "string",
+                                "example": "http://user:pass@127.0.0.1:8080"
+                            }
+                        },
+                        {
+                            "name": "timeout",
+                            "in": "query",
+                            "required": False,
+                            "description": "Optional solving timeout limit in seconds (default: 45).",
+                            "schema": {
+                                "type": "integer",
+                                "default": 45,
+                                "example": 45
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Task creation response or parameter validation error payload.",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/TaskCreatedResponse"
+                                    },
+                                    "examples": {
+                                        "success": {
+                                            "summary": "Task created successfully",
+                                            "value": {
+                                                "errorId": 0,
+                                                "taskId": "9c12b33a-4421-4fce-bc08-34821a8d052a"
+                                            }
+                                        },
+                                        "missing_url": {
+                                            "summary": "Missing URL parameter",
+                                            "value": {
+                                                "errorId": 1,
+                                                "errorCode": "ERROR_WRONG_PAGEURL",
+                                                "errorDescription": "'url' parameter is required and must have a valid http/https scheme"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/result": {
+                "get": {
+                    "summary": "Retrieve Solved Task Result",
+                    "description": "Polls the status and solution of a solve task by taskId.",
+                    "parameters": [
+                        {
+                            "name": "id",
+                            "in": "query",
+                            "required": True,
+                            "description": "The unique taskId returned when creating the task.",
+                            "schema": {
+                                "type": "string",
+                                "example": "7a35e4d2-f67b-402e-9d22-26cbdb6f890a"
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "description": "Task status and solution payload.",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/TaskResultResponse"
+                                    },
+                                    "examples": {
+                                        "processing": {
+                                            "summary": "Task still in progress",
+                                            "value": {
+                                                "status": "processing"
+                                            }
+                                        },
+                                        "turnstile_ready": {
+                                            "summary": "Turnstile solve ready",
+                                            "value": {
+                                                "errorId": 0,
+                                                "status": "ready",
+                                                "solution": {
+                                                    "token": "0.4c_92Kla9...",
+                                                    "elapsed_time": 2.34
+                                                }
+                                            }
+                                        },
+                                        "cf_clearance_ready": {
+                                            "summary": "CF Clearance solve ready",
+                                            "value": {
+                                                "errorId": 0,
+                                                "status": "ready",
+                                                "solution": {
+                                                    "cf_clearance": "v1.mock_clearance_token...",
+                                                    "cookies": [
+                                                        {"name": "cf_clearance", "value": "v1.mock_clearance_token..."}
+                                                    ],
+                                                    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
+                                                    "headers": {
+                                                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
+                                                        "sec-ch-ua": "\"Chromium\";v=\"139\", \"Google Chrome\";v=\"139\""
+                                                    },
+                                                    "elapsed_time": 4.12
+                                                }
+                                            }
+                                        },
+                                        "invalid_id": {
+                                            "summary": "Invalid or missing task ID",
+                                            "value": {
+                                                "errorId": 1,
+                                                "errorCode": "ERROR_WRONG_CAPTCHA_ID",
+                                                "errorDescription": "Invalid task ID/Request parameter"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/openapi.json": {
+                "get": {
+                    "summary": "OpenAPI 3.0.3 Specification JSON",
+                    "description": "Returns the complete raw OpenAPI 3.0.3 specification JSON.",
+                    "responses": {
+                        "200": {
+                            "description": "OpenAPI 3.0.3 JSON schema",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/swagger": {
+                "get": {
+                    "summary": "Interactive Swagger UI Documentation",
+                    "description": "Renders the interactive Swagger UI standalone documentation page with dark theme.",
+                    "responses": {
+                        "200": {
+                            "description": "Swagger UI HTML page",
+                            "content": {
+                                "text/html": {
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "/docs": {
+                "get": {
+                    "summary": "Interactive Documentation (Swagger UI)",
+                    "description": "Alias for /swagger providing the interactive API documentation.",
+                    "responses": {
+                        "200": {
+                            "description": "Swagger UI HTML page",
+                            "content": {
+                                "text/html": {
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "components": {
+            "schemas": {
+                "TaskCreatedResponse": {
+                    "type": "object",
+                    "properties": {
+                        "errorId": {
+                            "type": "integer",
+                            "description": "0 for success, 1 for error",
+                            "example": 0
+                        },
+                        "taskId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Unique task ID to poll for results",
+                            "example": "7a35e4d2-f67b-402e-9d22-26cbdb6f890a"
+                        },
+                        "errorCode": {
+                            "type": "string",
+                            "description": "Error code if errorId is 1",
+                            "example": "ERROR_WRONG_PAGEURL"
+                        },
+                        "errorDescription": {
+                            "type": "string",
+                            "description": "Human readable error description",
+                            "example": "Both 'url' and 'sitekey' are required, and 'url' must have a valid http/https scheme"
+                        }
+                    },
+                    "required": ["errorId"]
+                },
+                "TaskResultResponse": {
+                    "type": "object",
+                    "properties": {
+                        "errorId": {
+                            "type": "integer",
+                            "description": "0 for success, 1 for error",
+                            "example": 0
+                        },
+                        "status": {
+                            "type": "string",
+                            "description": "Task status: processing, ready, or error",
+                            "example": "ready"
+                        },
+                        "solution": {
+                            "type": "object",
+                            "description": "Solution data when status is ready",
+                            "properties": {
+                                "token": {
+                                    "type": "string",
+                                    "description": "Turnstile solved response token (for Turnstile tasks)"
+                                },
+                                "cf_clearance": {
+                                    "type": "string",
+                                    "description": "Cloudflare cf_clearance cookie value (for CF clearance tasks)"
+                                },
+                                "cookies": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {"type": "string"},
+                                            "value": {"type": "string"}
+                                        }
+                                    }
+                                },
+                                "user_agent": {
+                                    "type": "string",
+                                    "description": "Matching User-Agent header"
+                                },
+                                "headers": {
+                                    "type": "object",
+                                    "description": "Fingerprint headers for request replay"
+                                },
+                                "elapsed_time": {
+                                    "type": "number",
+                                    "description": "Solve duration in seconds"
+                                }
+                            }
+                        },
+                        "errorCode": {
+                            "type": "string",
+                            "description": "Error code if task failed"
+                        },
+                        "errorDescription": {
+                            "type": "string",
+                            "description": "Error description if task failed"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+def build_swagger_html() -> str:
+    """Generate standalone interactive Swagger UI HTML page."""
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turnstile Solver API - Swagger UI</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+    <link rel="icon" type="image/png" href="https://challenges.cloudflare.com/favicon.ico">
+    <style>
+        html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+        *, *:before, *:after { box-sizing: inherit; }
+        body { margin: 0; background: #0f172a; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        .swagger-ui { background: #0f172a; color: #e2e8f0; }
+        .swagger-ui .topbar { display: none; }
+        .swagger-ui .info { margin: 24px 0; }
+        .swagger-ui .info .title { color: #38bdf8; font-family: inherit; font-size: 28px; }
+        .swagger-ui .info p, .swagger-ui .info li { color: #cbd5e1; }
+        .swagger-ui .scheme-container { background: #1e293b; box-shadow: none; border-radius: 8px; margin: 20px 0; padding: 15px; border: 1px solid #334155; }
+        .swagger-ui .opblock { border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 16px; border: 1px solid #334155; }
+        .swagger-ui .opblock .opblock-summary { border-radius: 8px; padding: 10px 16px; }
+        .swagger-ui .opblock .opblock-summary-method { border-radius: 6px; font-weight: 700; }
+        .swagger-ui .opblock-description-wrapper p, .swagger-ui .opblock-external-docs-wrapper p, .swagger-ui .opblock-title_normal p { color: #94a3b8; }
+        .swagger-ui table thead tr td, .swagger-ui table thead tr th { color: #94a3b8; border-bottom: 1px solid #334155; }
+        .swagger-ui .parameters-col_name { color: #f1f5f9; }
+        .swagger-ui .parameter__name { color: #38bdf8; font-weight: 600; }
+        .swagger-ui .parameter__type { color: #a855f7; }
+        .swagger-ui input[type=text], .swagger-ui select { background: #1e293b; color: #f8fafc; border: 1px solid #475569; border-radius: 4px; padding: 6px 10px; }
+        .swagger-ui .btn { border-radius: 6px; font-weight: 600; }
+        .swagger-ui .btn.execute { background-color: #0284c7; color: #fff; border-color: #0284c7; }
+        .swagger-ui .btn.execute:hover { background-color: #0369a1; }
+        .swagger-ui .btn.cancel { border-color: #ef4444; color: #ef4444; }
+        .swagger-ui .response-col_status { color: #22c55e; }
+        .swagger-ui .responses-inner { background: #1e293b; padding: 15px; border-radius: 8px; }
+        .swagger-ui section.models { border: 1px solid #334155; border-radius: 8px; background: #1e293b; margin: 24px 0; }
+        .swagger-ui section.models h4 { color: #38bdf8; }
+        .custom-nav-bar { background: #1e293b; border-bottom: 1px solid #334155; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+        .custom-nav-title { font-size: 18px; font-weight: bold; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .custom-nav-links a { color: #94a3b8; text-decoration: none; font-size: 14px; margin-left: 16px; transition: color 0.2s; }
+        .custom-nav-links a:hover { color: #38bdf8; }
+    </style>
+</head>
+<body>
+    <div class="custom-nav-bar">
+        <div class="custom-nav-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Turnstile & Cloudflare Solver API
+        </div>
+        <div class="custom-nav-links">
+            <a href="/">Home</a>
+            <a href="/openapi.json" target="_blank">OpenAPI Spec (JSON)</a>
+        </div>
+    </div>
+    <div id="swagger-ui"></div>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            window.ui = SwaggerUIBundle({
+                url: "/openapi.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout"
+            });
+        };
+    </script>
+</body>
+</html>"""
+
+
 def build_route_html(sitekey: str, action: Optional[str] = None, cdata: Optional[str] = None) -> str:
     """Generate lightweight synthetic HTML stub with explicit Turnstile widget and callback."""
     action_attr = f' data-action="{html.escape(action)}"' if action else ''
@@ -240,7 +739,7 @@ class TurnstileAPIServer:
         
         combined_text = Text()
         combined_text.append("\nHigh-throughput Turnstile & Cloudflare Solver API", style="bold white")
-        combined_text.append("\nEndpoints: /turnstile | /cf_clearance | /result | /docs", style="green")
+        combined_text.append("\nEndpoints: /turnstile | /cf_clearance | /result | /swagger | /openapi.json", style="green")
         combined_text.append("\nFeatures: Fast Route-Intercept, Physical Mouse Clicks, IUAM Clearances", style="yellow")
         combined_text.append("\nRuntime: Quart + Patchright/Camoufox", style="cyan")
         combined_text.append("\nStorage: SQLite (WAL mode)", style="cyan")
@@ -265,9 +764,11 @@ class TurnstileAPIServer:
         self.app.route('/turnstile', methods=['GET'])(self.process_turnstile)
         self.app.route('/cf_clearance', methods=['GET'])(self.process_cf_clearance)
         self.app.route('/result', methods=['GET'])(self.get_result)
+        self.app.route('/openapi.json', methods=['GET'])(self.get_openapi_json)
+        self.app.route('/swagger', methods=['GET'])(self.get_swagger_ui)
+        self.app.route('/docs', methods=['GET'])(self.get_swagger_ui)
+        self.app.route('/docs/', methods=['GET'])(self.get_swagger_ui)
         self.app.route('/')(self.index)
-        self.app.route('/docs')(self.index)
-        self.app.route('/docs/')(self.index)
 
     async def _startup(self) -> None:
         """Initialize the browser and page pool on startup."""
@@ -1249,6 +1750,16 @@ class TurnstileAPIServer:
             }), 200
 
     @staticmethod
+    async def get_openapi_json():
+        """Serve the OpenAPI 3.0.3 specification JSON."""
+        return jsonify(get_openapi_spec()), 200
+
+    @staticmethod
+    async def get_swagger_ui():
+        """Serve the interactive Swagger UI page."""
+        return build_swagger_html(), 200, {'Content-Type': 'text/html; charset=utf-8'}
+
+    @staticmethod
     async def index():
         """Serve the API documentation page."""
         return """
@@ -1262,8 +1773,16 @@ class TurnstileAPIServer:
             </head>
             <body class="bg-gray-900 text-gray-200 min-h-screen flex items-center justify-center p-6">
                 <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-3xl w-full border border-blue-500">
-                    <h1 class="text-3xl font-bold mb-2 text-center text-blue-400">Turnstile & Cloudflare Solver API</h1>
-                    <p class="text-center text-gray-400 mb-6 text-sm">High-throughput automated solver for Cloudflare Turnstile & Interstitial Challenges</p>
+                    <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-700">
+                        <div>
+                            <h1 class="text-3xl font-bold text-blue-400">Turnstile & Cloudflare Solver API</h1>
+                            <p class="text-gray-400 text-sm mt-1">High-throughput automated solver for Cloudflare Turnstile & Interstitial Challenges</p>
+                        </div>
+                        <a href="/swagger" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Swagger UI
+                        </a>
+                    </div>
 
                     <div class="space-y-6">
                         <!-- Turnstile Section -->
@@ -1300,8 +1819,13 @@ class TurnstileAPIServer:
                         </div>
                     </div>
 
-                    <div class="mt-6 pt-4 border-t border-gray-700 text-center text-xs text-gray-500">
-                        Zero Cold-Start Worker Pool • SQLite WAL Mode • Physical Mouse Coordinate Traversal
+                    <div class="mt-6 pt-4 border-t border-gray-700 flex items-center justify-between text-xs text-gray-400">
+                        <span>Zero Cold-Start Worker Pool • SQLite WAL Mode • Physical Coordinates</span>
+                        <div class="flex gap-3">
+                            <a href="/swagger" class="text-blue-400 hover:underline">Swagger UI</a>
+                            <span>•</span>
+                            <a href="/openapi.json" class="text-blue-400 hover:underline" target="_blank">OpenAPI JSON</a>
+                        </div>
                     </div>
                 </div>
             </body>

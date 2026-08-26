@@ -186,6 +186,52 @@ class EndpointRoutingTests(unittest.IsolatedAsyncioTestCase):
         data = await response.get_data(as_text=True)
         self.assertIn("Turnstile", data)
         self.assertIn("/turnstile", data)
+        self.assertIn("/swagger", data)
+        self.assertIn("/openapi.json", data)
+
+    async def test_swagger_and_docs_endpoints(self):
+        # /swagger
+        res_swagger = await self.client.get("/swagger")
+        self.assertEqual(res_swagger.status_code, 200)
+        content_type = res_swagger.headers.get("Content-Type", "")
+        self.assertIn("text/html", content_type)
+        html_swagger = await res_swagger.get_data(as_text=True)
+        self.assertIn("swagger-ui", html_swagger)
+        self.assertIn("/openapi.json", html_swagger)
+
+        # /docs
+        res_docs = await self.client.get("/docs")
+        self.assertEqual(res_docs.status_code, 200)
+        html_docs = await res_docs.get_data(as_text=True)
+        self.assertIn("swagger-ui", html_docs)
+
+        # /docs/
+        res_docs_slash = await self.client.get("/docs/")
+        self.assertEqual(res_docs_slash.status_code, 200)
+        html_docs_slash = await res_docs_slash.get_data(as_text=True)
+        self.assertIn("swagger-ui", html_docs_slash)
+
+    async def test_openapi_json_endpoint(self):
+        response = await self.client.get("/openapi.json")
+        self.assertEqual(response.status_code, 200)
+        json_data = await response.get_json()
+        self.assertEqual(json_data.get("openapi"), "3.0.3")
+        self.assertEqual(json_data.get("info", {}).get("title"), "Turnstile & Cloudflare Solver API")
+        
+        # Verify paths
+        paths = json_data.get("paths", {})
+        self.assertIn("/", paths)
+        self.assertIn("/turnstile", paths)
+        self.assertIn("/cf_clearance", paths)
+        self.assertIn("/result", paths)
+        self.assertIn("/openapi.json", paths)
+        self.assertIn("/swagger", paths)
+        self.assertIn("/docs", paths)
+        
+        # Verify schemas
+        schemas = json_data.get("components", {}).get("schemas", {})
+        self.assertIn("TaskCreatedResponse", schemas)
+        self.assertIn("TaskResultResponse", schemas)
 
     async def test_turnstile_missing_params(self):
         response = await self.client.get("/turnstile")

@@ -76,6 +76,15 @@ python api_solver.py --browser_type chromium --proxy --thread 2
 
 ---
 
+## 📖 Interactive API Documentation
+
+- **Swagger UI:** `http://localhost:5072/swagger` or `http://localhost:5072/docs`
+- **OpenAPI 3.0.3 Specification:** `http://localhost:5072/openapi.json`
+
+The server provides a built-in dark-themed Swagger UI with interactive parameter exploration and request execution.
+
+---
+
 ## 📡 API Reference
 
 ### 1. Solve Turnstile Widget (`/turnstile`)

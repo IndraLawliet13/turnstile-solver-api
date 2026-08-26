@@ -27,6 +27,9 @@ turnstile.log
 .ruff_cache/
 coverage/
 htmlcov/
+dist/
+build/
+*.egg-info/
 
 # OS/editor
 .DS_Store

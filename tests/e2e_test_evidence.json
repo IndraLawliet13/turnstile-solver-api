@@ -1,0 +1,839 @@
+{
+  "audit_metadata": {
+    "test_runner": "PRISM (Fleet Independent Verification Specialist)",
+    "timestamp_utc": "2026-08-26T01:13:37Z",
+    "target_server": "http://127.0.0.1:5088",
+    "total_tests_run": 15,
+    "total_passed": 15,
+    "total_failed": 0,
+    "all_tests_passed": true
+  },
+  "endpoint_test_matrix": [
+    {
+      "test_id": "EP-01",
+      "name": "Landing Page GET /",
+      "method": "GET",
+      "endpoint": "/",
+      "url_tested": "http://127.0.0.1:5088/",
+      "params": null,
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0073,
+      "response_length": 4902,
+      "content_type": "text/html; charset=utf-8",
+      "is_json": false,
+      "payload_preview": "\n            <!DOCTYPE html>\n            <html lang=\"en\">\n            <head>\n                <meta charset=\"UTF-8\">\n                <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n                <title>Turnstile Solver API</title>\n                <script src=\"https://cdn.tail...",
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "HTML rendered with correct title and links"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-02",
+      "name": "Swagger UI GET /swagger",
+      "method": "GET",
+      "endpoint": "/swagger",
+      "url_tested": "http://127.0.0.1:5088/swagger",
+      "params": null,
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0022,
+      "response_length": 4655,
+      "content_type": "text/html; charset=utf-8",
+      "is_json": false,
+      "payload_preview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Turnstile Solver API - Swagger UI</title>\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-u...",
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Swagger UI bundle assets and spec target confirmed"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-03",
+      "name": "Swagger Docs Alias GET /docs",
+      "method": "GET",
+      "endpoint": "/docs",
+      "url_tested": "http://127.0.0.1:5088/docs",
+      "params": null,
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.004,
+      "response_length": 4655,
+      "content_type": "text/html; charset=utf-8",
+      "is_json": false,
+      "payload_preview": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Turnstile Solver API - Swagger UI</title>\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-u...",
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Swagger UI docs alias confirmed"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-04",
+      "name": "OpenAPI Schema GET /openapi.json",
+      "method": "GET",
+      "endpoint": "/openapi.json",
+      "url_tested": "http://127.0.0.1:5088/openapi.json",
+      "params": null,
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0045,
+      "response_length": 7735,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "components": {
+          "schemas": {
+            "TaskCreatedResponse": {
+              "properties": {
+                "errorCode": {
+                  "description": "Error code if errorId is 1",
+                  "example": "ERROR_WRONG_PAGEURL",
+                  "type": "string"
+                },
+                "errorDescription": {
+                  "description": "Human readable error description",
+                  "example": "Both 'url' and 'sitekey' are required, and 'url' must have a valid http/https scheme",
+                  "type": "string"
+                },
+                "errorId": {
+                  "description": "0 for success, 1 for error",
+                  "example": 0,
+                  "type": "integer"
+                },
+                "taskId": {
+                  "description": "Unique task ID to poll for results",
+                  "example": "7a35e4d2-f67b-402e-9d22-26cbdb6f890a",
+                  "format": "uuid",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "errorId"
+              ],
+              "type": "object"
+            },
+            "TaskResultResponse": {
+              "properties": {
+                "errorCode": {
+                  "description": "Error code if task failed",
+                  "type": "string"
+                },
+                "errorDescription": {
+                  "description": "Error description if task failed",
+                  "type": "string"
+                },
+                "errorId": {
+                  "description": "0 for success, 1 for error",
+                  "example": 0,
+                  "type": "integer"
+                },
+                "solution": {
+                  "description": "Solution data when status is ready",
+                  "properties": {
+                    "cf_clearance": {
+                      "description": "Cloudflare cf_clearance cookie value (for CF clearance tasks)",
+                      "type": "string"
+                    },
+                    "cookies": {
+                      "items": {
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "elapsed_time": {
+                      "description": "Solve duration in seconds",
+                      "type": "number"
+                    },
+                    "headers": {
+                      "description": "Fingerprint headers for request replay",
+                      "type": "object"
+                    },
+                    "token": {
+                      "description": "Turnstile solved response token (for Turnstile tasks)",
+                      "type": "string"
+                    },
+                    "user_agent": {
+                      "description": "Matching User-Agent header",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "status": {
+                  "description": "Task status: processing, ready, or error",
+                  "example": "ready",
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "info": {
+          "contact": {
+            "name": "Turnstile Solver Team"
+          },
+          "description": "High-throughput asynchronous API solver for Cloudflare Turnstile CAPTCHA widgets and Cloudflare Interstitial / IUAM / cf_clearance challenges.",
+          "license": {
+            "name": "MIT"
+          },
+          "title": "Turnstile & Cloudflare Solver API",
+          "version": "1.2.0"
+        },
+        "openapi": "3.0.3",
+        "paths": {
+          "/": {
+            "get": {
+              "description": "Serves the dashboard landing page HTML with live endpoint documentation and links to interactive Swagger UI.",
+              "responses": {
+                "200": {
+                  "content": {
+                    "text/html": {
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "description": "HTML Dashboard Landing Page"
+                }
+              },
+              "summary": "Welcome & Quickstart Guide"
+            }
+          },
+          "/cf_clearance": {
+            "get": {
+              "description": "Enqueues an asynchronous Cloudflare IUAM/interstitial clearance solver task to extract session cf_clearance cookies, User-Agent, and browser fingerprint headers.",
+              "parameters": [
+                {
+                  "description": "Target website URL protected by Cloudflare IUAM / 5-second challenge.",
+                  "in": "query",
+                  "name": "url",
+                  "required": true,
+                  "schema": {
+                    "example": "https://protected-site.com",
+                    "format": "uri",
+                    "type": "string"
+                  }
+                },
+                {
+                  "description": "Optional custom proxy string (ip:port, ip:port:user:pass, or scheme://user:pass@ip:port).",
+                  "in": "query",
+                  "name": "proxy",
+                  "required": false,
+                  "schema": {
+                    "example": "http://user:pass@127.0.0.1:8080",
+                    "type": "string"
+                  }
+                },
+                {
+                  "description": "Optional solving timeout limit in seconds (default: 45).",
+                  "in": "query",
+                  "name": "timeout",
+                  "required": false,
+                  "schema": {
+                    "default": 45,
+                    "example": 45,
+                    "type": "integer"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "content": {
+                    "application/json": {
+                      "examples": {
+                        "missing_url": {
+                          "summary": "Missing URL parameter",
+                          "value": {
+                            "errorCode": "ERROR_WRONG_PAGEURL",
+                            "errorDescription": "'url' parameter is required and must have a valid http/https scheme",
+                            "errorId": 1
+                          }
+                        },
+                        "success": {
+                          "summary": "Task created successfully",
+                          "value": {
+                            "errorId": 0,
+                            "taskId": "9c12b33a-4421-4fce-bc08-34821a8d052a"
+                          }
+                        }
+                      },
+                      "schema": {
+                        "$ref": "#/components/schemas/TaskCreatedResponse"
+                      }
+                    }
+                  },
+                  "description": "Task creation response or parameter validation error payload."
+                }
+              },
+              "summary": "Create Cloudflare Clearance (IUAM) Solve Task"
+            }
+          },
+          "/docs": {
+            "get": {
+              "description": "Alias for /swagger providing the interactive API documentation.",
+              "responses": {
+                "200": {
+                  "content": {
+                    "text/html": {
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "description": "Swagger UI HTML page"
+                }
+              },
+              "summary": "Interactive Documentation (Swagger UI)"
+            }
+          },
+          "/openapi.json": {
+            "get": {
+              "description": "Returns the complete raw OpenAPI 3.0.3 specification JSON.",
+              "responses": {
+                "200": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "description": "OpenAPI 3.0.3 JSON schema"
+                }
+              },
+              "summary": "OpenAPI 3.0.3 Specification JSON"
+            }
+          },
+          "/result": {
+            "get": {
+              "description": "Polls the status and solution of a solve task by taskId.",
+              "parameters": [
+                {
+                  "description": "The unique taskId returned when creating the task.",
+                  "in": "query",
+                  "name": "id",
+                  "required": true,
+                  "schema": {
+                    "example": "7a35e4d2-f67b-402e-9d22-26cbdb6f890a",
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "content": {
+                    "application/json": {
+                      "examples": {
+                        "cf_clearance_ready": {
+                          "summary": "CF Clearance solve ready",
+                          "value": {
+                            "errorId": 0,
+                            "solution": {
+                              "cf_clearance": "v1.mock_clearance_token...",
+                              "cookies": [
+                                {
+                                  "name": "cf_clearance",
+                                  "value": "v1.mock_clearance_token..."
+                                }
+                              ],
+                              "elapsed_time": 4.12,
+                              "headers": {
+                                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
+                                "sec-ch-ua": "\"Chromium\";v=\"139\", \"Google Chrome\";v=\"139\""
+                              },
+                              "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)..."
+                            },
+                            "status": "ready"
+                          }
+                        },
+                        "invalid_id": {
+                          "summary": "Invalid or missing task ID",
+                          "value": {
+                            "errorCode": "ERROR_WRONG_CAPTCHA_ID",
+                            "errorDescription": "Invalid task ID/Request parameter",
+                            "errorId": 1
+                          }
+                        },
+                        "processing": {
+                          "summary": "Task still in progress",
+                          "value": {
+                            "status": "processing"
+                          }
+                        },
+                        "turnstile_ready": {
+                          "summary": "Turnstile solve ready",
+                          "value": {
+                            "errorId": 0,
+                            "solution": {
+                              "elapsed_time": 2.34,
+                              "token": "0.4c_92Kla9..."
+                            },
+                            "status": "ready"
+                          }
+                        }
+                      },
+                      "schema": {
+                        "$ref": "#/components/schemas/TaskResultResponse"
+                      }
+                    }
+                  },
+                  "description": "Task status and solution payload."
+                }
+              },
+              "summary": "Retrieve Solved Task Result"
+            }
+          },
+          "/swagger": {
+            "get": {
+              "description": "Renders the interactive Swagger UI standalone documentation page with dark theme.",
+              "responses": {
+                "200": {
+                  "content": {
+                    "text/html": {
+                      "schema": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "description": "Swagger UI HTML page"
+                }
+              },
+              "summary": "Interactive Swagger UI Documentation"
+            }
+          },
+          "/turnstile": {
+            "get": {
+              "description": "Enqueues an asynchronous Cloudflare Turnstile widget solving job using fast route-intercept or full-page execution.",
+              "parameters": [
+                {
+                  "description": "Target website URL containing Cloudflare Turnstile widget (e.g. https://example.com/login). Must use http or https scheme.",
+                  "in": "query",
+                  "name": "url",
+                  "required": true,
+                  "schema": {
+                    "example": "https://example.com/login",
+                    "format": "uri",
+                    "type": "string"
+                  }
+                },
+                {
+                  "description": "Cloudflare Turnstile sitekey (e.g. 0x4AAAAAAAJ5XXXXXXXXX).",
+                  "in": "query",
+                  "name": "sitekey",
+                  "required": true,
+                  "schema": {
+                    "example": "0x4AAAAAAAJ5XXXXXXXXX",
+                    "type": "string"
+                  }
+                },
+                {
+                  "description": "Optional Turnstile action parameter bound to the widget.",
+                  "in": "query",
+                  "name": "action",
+                  "required": false,
+                  "schema": {
+                    "example": "login",
+                    "type": "string"
+                  }
+                },
+                {
+                  "description": "Optional Turnstile customer data (cdata) payload.",
+                  "in": "query",
+                  "name": "cdata",
+                  "required": false,
+                  "schema": {
+                    "example": "session_context_data",
+                    "type": "string"
+                  }
+                },
+                {
+                  "description": "Optional custom proxy string (ip:port, ip:port:user:pass, or scheme://user:pass@ip:port).",
+                  "in": "query",
+                  "name": "proxy",
+                  "required": false,
+                  "schema": {
+                    "example": "http://user:pass@127.0.0.1:8080",
+                    "type": "string"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                  "content": {
+                    "application/json": {
+                      "examples": {
+                        "missing_url": {
+                          "summary": "Missing URL parameter",
+                          "value": {
+                            "errorCode": "ERROR_WRONG_PAGEURL",
+                            "errorDescription": "Both 'url' and 'sitekey' are required, and 'url' must have a valid http/https scheme",
+                            "errorId": 1
+                          }
+                        },
+                        "success": {
+                          "summary": "Task created successfully",
+                          "value": {
+                            "errorId": 0,
+                            "taskId": "7a35e4d2-f67b-402e-9d22-26cbdb6f890a"
+                          }
+                        }
+                      },
+                      "schema": {
+                        "$ref": "#/components/schemas/TaskCreatedResponse"
+                      }
+                    }
+                  },
+                  "description": "Task creation response or parameter validation error payload (compatible with 2captcha/CapSolver schema)."
+                }
+              },
+              "summary": "Create Turnstile Solve Task"
+            }
+          }
+        },
+        "servers": [
+          {
+            "description": "Current Server",
+            "url": "/"
+          }
+        ]
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "OpenAPI 3.0.3 confirmed with 7 paths"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-05",
+      "name": "Turnstile Missing All Params",
+      "method": "GET",
+      "endpoint": "/turnstile",
+      "url_tested": "http://127.0.0.1:5088/turnstile",
+      "params": {},
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0012,
+      "response_length": 154,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorCode": "ERROR_WRONG_PAGEURL",
+        "errorDescription": "Both 'url' and 'sitekey' are required, and 'url' must have a valid http/https scheme",
+        "errorId": 1
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Handled missing params cleanly: ERROR_WRONG_PAGEURL"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-06",
+      "name": "Turnstile Missing Sitekey",
+      "method": "GET",
+      "endpoint": "/turnstile",
+      "url_tested": "http://127.0.0.1:5088/turnstile?url=https%3A//example.com",
+      "params": {
+        "url": "https://example.com"
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0011,
+      "response_length": 154,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorCode": "ERROR_WRONG_PAGEURL",
+        "errorDescription": "Both 'url' and 'sitekey' are required, and 'url' must have a valid http/https scheme",
+        "errorId": 1
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Handled missing params cleanly: ERROR_WRONG_PAGEURL"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-07",
+      "name": "Turnstile Invalid URL Scheme (javascript:)",
+      "method": "GET",
+      "endpoint": "/turnstile",
+      "url_tested": "http://127.0.0.1:5088/turnstile?url=javascript%3Aalert%281%29&sitekey=0x4AAAAAA",
+      "params": {
+        "url": "javascript:alert(1)",
+        "sitekey": "0x4AAAAAA"
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0013,
+      "response_length": 154,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorCode": "ERROR_WRONG_PAGEURL",
+        "errorDescription": "Both 'url' and 'sitekey' are required, and 'url' must have a valid http/https scheme",
+        "errorId": 1
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Handled missing params cleanly: ERROR_WRONG_PAGEURL"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-08",
+      "name": "Turnstile Live Solve Dispatch",
+      "method": "GET",
+      "endpoint": "/turnstile",
+      "url_tested": "http://127.0.0.1:5088/turnstile?url=https%3A//peet.ws/turnstile-test/non-interactive.html&sitekey=0x4AAAAAAAG9h6W7iN4A-X5O",
+      "params": {
+        "url": "https://peet.ws/turnstile-test/non-interactive.html",
+        "sitekey": "0x4AAAAAAAG9h6W7iN4A-X5O"
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0047,
+      "response_length": 62,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorId": 0,
+        "taskId": "330b382f-9bac-48cb-896b-27a1cdf286e5"
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Task queued with taskId: 330b382f-9bac-48cb-896b-27a1cdf286e5"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-09",
+      "name": "CF Clearance Missing URL Param",
+      "method": "GET",
+      "endpoint": "/cf_clearance",
+      "url_tested": "http://127.0.0.1:5088/cf_clearance",
+      "params": {},
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.003,
+      "response_length": 137,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorCode": "ERROR_WRONG_PAGEURL",
+        "errorDescription": "'url' parameter is required and must have a valid http/https scheme",
+        "errorId": 1
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Handled missing url param: ERROR_WRONG_PAGEURL"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-10",
+      "name": "CF Clearance Invalid URL Scheme (file://)",
+      "method": "GET",
+      "endpoint": "/cf_clearance",
+      "url_tested": "http://127.0.0.1:5088/cf_clearance?url=file%3A///etc/passwd",
+      "params": {
+        "url": "file:///etc/passwd"
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0021,
+      "response_length": 137,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorCode": "ERROR_WRONG_PAGEURL",
+        "errorDescription": "'url' parameter is required and must have a valid http/https scheme",
+        "errorId": 1
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Handled missing url param: ERROR_WRONG_PAGEURL"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-11",
+      "name": "CF Clearance Live Solve Dispatch",
+      "method": "GET",
+      "endpoint": "/cf_clearance",
+      "url_tested": "http://127.0.0.1:5088/cf_clearance?url=https%3A//nowsecure.nl",
+      "params": {
+        "url": "https://nowsecure.nl"
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0122,
+      "response_length": 62,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorId": 0,
+        "taskId": "d8da00f0-abcd-4aab-b275-67ceaac699ca"
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Task queued with taskId: d8da00f0-abcd-4aab-b275-67ceaac699ca"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-12",
+      "name": "Result Missing ID Param",
+      "method": "GET",
+      "endpoint": "/result",
+      "url_tested": "http://127.0.0.1:5088/result",
+      "params": {},
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0023,
+      "response_length": 106,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorCode": "ERROR_WRONG_CAPTCHA_ID",
+        "errorDescription": "Invalid task ID/Request parameter",
+        "errorId": 1
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Handled missing id: ERROR_WRONG_CAPTCHA_ID"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-13",
+      "name": "Result Non-Existent ID",
+      "method": "GET",
+      "endpoint": "/result",
+      "url_tested": "http://127.0.0.1:5088/result?id=11111111-2222-3333-4444-555555555555",
+      "params": {
+        "id": "11111111-2222-3333-4444-555555555555"
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0081,
+      "response_length": 89,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorCode": "ERROR_CAPTCHA_UNSOLVABLE",
+        "errorDescription": "Task not found",
+        "errorId": 1
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Handled not found: ERROR_CAPTCHA_UNSOLVABLE - Task not found"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-14",
+      "name": "Result Polling Turnstile Ready Solution",
+      "method": "GET",
+      "endpoint": "/result",
+      "url_tested": "http://127.0.0.1:5088/result?id=330b382f-9bac-48cb-896b-27a1cdf286e5",
+      "params": {
+        "id": "330b382f-9bac-48cb-896b-27a1cdf286e5"
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0077,
+      "response_length": 785,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorId": 0,
+        "solution": {
+          "elapsed_time": 4.699,
+          "token": "1.jfgTD0qhSQT1o_73j-rQJxatDEBkE0inGwZhnQUmqibLUvPDJlkP4LgrpXPyTf1BmvN8X-yunSdpJST4Q6tRBuO_H1VnwEN7uEsWhYl6vqPJ7N7VNk5p39HVTDb_vj65v4c25gZCHq8OQix717yxzikWKUvEIRk6ajeJpWQ_dLBR5Z2kHVs8xkQn1YxNbEl7CStx1myAgBDDdkoCMNgijjNZEFB8mKxu3OyFIMK-Ey5zMfcpuSYfAnot5OCuxgg3n_ax5jTajUmKbSWWkAC-QZ-kX-UVt3WH-55UUWPwbJ4DaV-ws-bUVWZUjG3KBcmbhPODHmdX6gL8H5XEmTfdcfV0TmFKHWsEHH3A0MJs5cggkTPwiSdVhm37b3kw3fNFavYJLUGHBIWbB3xl9EpSuZJ83_2aCM5xA6HarCUtRyKC6ICDik7ruUFiW9hCAna0Gm8m6s4PwQeSYsOyw2LUs7c665CLVpoVK-UMZHI9j6eT7QoFeBNbPuLHGvMjrO5Z05Fe4snAolzo9aCQFa3l4VhyInfj01c9vXRRwF8gKjMqyqXnXyVedNrLYpcGqofHnhOT4dPtrpsCd7zdbGvpIxmpewNqh-kuAvlFD4aYSr0.v9ae2UJbjSq4fbALE0MfSw.b14d58fdbdb78bf7488131a45d869e811771fd803089f21ec0fb3c9e6cdc49ce"
+        },
+        "status": "ready"
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "Solved token verified (length: 709) in 4.699s"
+      ],
+      "error": null
+    },
+    {
+      "test_id": "EP-15",
+      "name": "Result Polling CF Clearance Ready Solution",
+      "method": "GET",
+      "endpoint": "/result",
+      "url_tested": "http://127.0.0.1:5088/result?id=d8da00f0-abcd-4aab-b275-67ceaac699ca",
+      "params": {
+        "id": "d8da00f0-abcd-4aab-b275-67ceaac699ca"
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "elapsed_seconds": 0.0038,
+      "response_length": 1677,
+      "content_type": "application/json",
+      "is_json": true,
+      "payload_preview": {
+        "errorId": 0,
+        "solution": {
+          "cf_clearance": "0KoZwN3vkb.7EJEsZcfvl0NUFnKSVxXx3BdZ4CzQG08-1787706803-1.2.1.1-TwGEP3tDPHTjIWGWH5WKQHUT2djljgPDG4HJwVrvLSZ1iRrCBFtevC6lAMwl0.iV9K_fRN7MCnpBMKX6qZqB_FQ.YE0bjwG2FxYhzb2q9J7zoZitCRNAmBZAv6o.eoJ4uQGs0LACBrcHxZF6BhhPtYyKfQHr8asMPLiB.U9Hro8_3f8VXmVnK3rtj8Hoc9lagfHa.a4y7Q7n7xvbPUJrBkZqlsvbwrHfbL1gSTLhpUaJOmRL4p4nXjzcqfNCZ5fot63eGx_UmX2Y2SI.CFLRl9ubk8bmzk4GM6.MS.sXZBIEc85dAv9zypZQYxGDHVaO.EVXGpVD_filQPP01KUSCQlDrc9rqmWMGJNm4kaDmEhNJ0xfjNssEVAOSRUFK6KxM1PXGTeNnTqbiQr3eUbg7V.I1pa0p48FDz63bzE1JxY",
+          "cookies": [
+            {
+              "_crHasCrossSiteAncestor": false,
+              "domain": ".nowsecure.nl",
+              "expires": 1819242803.928665,
+              "httpOnly": true,
+              "name": "cf_clearance",
+              "partitionKey": "https://nowsecure.nl",
+              "path": "/",
+              "sameSite": "None",
+              "secure": true,
+              "value": "0KoZwN3vkb.7EJEsZcfvl0NUFnKSVxXx3BdZ4CzQG08-1787706803-1.2.1.1-TwGEP3tDPHTjIWGWH5WKQHUT2djljgPDG4HJwVrvLSZ1iRrCBFtevC6lAMwl0.iV9K_fRN7MCnpBMKX6qZqB_FQ.YE0bjwG2FxYhzb2q9J7zoZitCRNAmBZAv6o.eoJ4uQGs0LACBrcHxZF6BhhPtYyKfQHr8asMPLiB.U9Hro8_3f8VXmVnK3rtj8Hoc9lagfHa.a4y7Q7n7xvbPUJrBkZqlsvbwrHfbL1gSTLhpUaJOmRL4p4nXjzcqfNCZ5fot63eGx_UmX2Y2SI.CFLRl9ubk8bmzk4GM6.MS.sXZBIEc85dAv9zypZQYxGDHVaO.EVXGpVD_filQPP01KUSCQlDrc9rqmWMGJNm4kaDmEhNJ0xfjNssEVAOSRUFK6KxM1PXGTeNnTqbiQr3eUbg7V.I1pa0p48FDz63bzE1JxY"
+            }
+          ],
+          "elapsed_time": 14.733,
+          "headers": {
+            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+            "sec-ch-ua": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Brave\";v=\"138\""
+          },
+          "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+        },
+        "status": "ready"
+      },
+      "validation_passed": true,
+      "validation_notes": [
+        "HTTP Status matches 200",
+        "CF Clearance cookie verified (0KoZwN3vkb.7EJEsZcfv...) and UA captured (Mozilla/5.0 (Windows NT 10.0; ...)"
+      ],
+      "error": null
+    }
+  ]
+}

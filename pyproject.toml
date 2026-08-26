@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turnstile-solver-api"
+version = "1.2.0"
+description = "High-throughput asynchronous Cloudflare Turnstile and Interstitial Solver API"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Turnstile Solver Team" }
+]
+keywords = ["turnstile", "cloudflare", "captcha-solver", "quart", "patchright", "camoufox"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "quart>=0.19.0",
+    "patchright>=1.40.0",
+    "camoufox[geoip]>=0.4.0",
+    "requests>=2.31.0",
+    "aiosqlite>=0.19.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "flake8>=6.0.0",
+    "build>=1.0.0",
+    "twine>=4.0.0"
+]
+
+[project.scripts]
+turnstile-solver = "api_solver:parse_args"
+
+[tool.setuptools]
+py-modules = ["api_solver", "browser_configs", "db_results"]
