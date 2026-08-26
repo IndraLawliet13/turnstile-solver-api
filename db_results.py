@@ -1,11 +1,11 @@
 import aiosqlite
 import json
 import logging
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, Tuple
 
 DB_PATH = "results.db"
 
-# PRAGMA настройки для оптимизации БД
+# PRAGMA settings for DB optimization
 PRAGMA_SETTINGS = [
     "PRAGMA journal_mode=WAL",
     "PRAGMA synchronous=NORMAL", 
@@ -15,7 +15,7 @@ PRAGMA_SETTINGS = [
 ]
 
 async def _apply_pragma_settings(db):
-    """Применить PRAGMA настройки к подключению БД"""
+    """Apply PRAGMA settings to database connection"""
     for pragma in PRAGMA_SETTINGS:
         await db.execute(pragma)
 
@@ -40,12 +40,18 @@ async def init_db():
         raise
 
 async def save_result(task_id: str, task_type: str, data: Union[Dict[str, Any], str]) -> None:
-    """Save result to database"""
+    """Save result to database with explicit task type and structured payload"""
     try:
         async with aiosqlite.connect(DB_PATH) as db:
             await _apply_pragma_settings(db)
             
-            data_json = json.dumps(data) if isinstance(data, dict) else data
+            if isinstance(data, dict):
+                # Ensure type is present in dict payload for easy access
+                if "type" not in data:
+                    data["type"] = task_type
+                data_json = json.dumps(data)
+            else:
+                data_json = data
             
             await db.execute(
                 "REPLACE INTO results (task_id, type, data) VALUES (?, ?, ?)",
@@ -74,6 +80,26 @@ async def load_result(task_id: str) -> Optional[Union[Dict[str, Any], str]]:
         logging.getLogger("TurnstileAPIServer").error(f"Error loading result {task_id}: {e}")
         return None
 
+async def load_result_with_type(task_id: str) -> Optional[Tuple[str, Union[Dict[str, Any], str]]]:
+    """Load task type and result data from database"""
+    try:
+        async with aiosqlite.connect(DB_PATH) as db:
+            await _apply_pragma_settings(db)
+            
+            async with db.execute("SELECT type, data FROM results WHERE task_id = ?", (task_id,)) as cursor:
+                row = await cursor.fetchone()
+                if row:
+                    task_type, raw_data = row[0], row[1]
+                    try:
+                        parsed_data = json.loads(raw_data)
+                    except json.JSONDecodeError:
+                        parsed_data = raw_data
+                    return task_type, parsed_data
+        return None
+    except Exception as e:
+        logging.getLogger("TurnstileAPIServer").error(f"Error loading result with type {task_id}: {e}")
+        return None
+
 async def load_all_results() -> Dict[str, Any]:
     """Load all results from database"""
     try:
@@ -81,12 +107,16 @@ async def load_all_results() -> Dict[str, Any]:
             await _apply_pragma_settings(db)
             
             results = {}
-            async with db.execute("SELECT task_id, data FROM results") as cursor:
+            async with db.execute("SELECT task_id, type, data FROM results") as cursor:
                 async for row in cursor:
+                    task_id, task_type, raw_data = row[0], row[1], row[2]
                     try:
-                        results[row[0]] = json.loads(row[1])
+                        parsed = json.loads(raw_data)
+                        if isinstance(parsed, dict) and "type" not in parsed:
+                            parsed["type"] = task_type
+                        results[task_id] = parsed
                     except json.JSONDecodeError:
-                        results[row[0]] = row[1]
+                        results[task_id] = raw_data
             return results
     except Exception as e:
         logging.getLogger("TurnstileAPIServer").error(f"Error loading all results: {e}")

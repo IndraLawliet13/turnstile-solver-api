@@ -1,13 +1,13 @@
 # Usage Guide
 
-Practical request patterns for the Turnstile Solver API showcase.
+Practical request patterns for the Turnstile & Cloudflare Solver API.
 
 ## API flow at a glance
 
 1. Start the server.
-2. Create a solve task with `/turnstile`.
+2. Create a solve task with `/turnstile` or `/cf_clearance`.
 3. Poll `/result?id=<task-id>` until the task is ready or fails.
-4. Read the solved token from `solution.token`.
+4. Read the solved token or session clearance bundle from `solution`.
 
 ## Start the API
 
@@ -20,12 +20,12 @@ python api_solver.py --browser_type chromium --host 127.0.0.1 --port 5000
 Useful variants:
 
 ```bash
-python api_solver.py --browser_type chrome --thread 6 --host 127.0.0.1 --port 5000
+python api_solver.py --browser_type chrome --thread 4 --host 127.0.0.1 --port 5000
 python api_solver.py --browser_type camoufox --debug --host 127.0.0.1 --port 5000
 python api_solver.py --browser_type chromium --proxy --random --host 127.0.0.1 --port 5000
 ```
 
-## Create a solve task
+## 1. Create a Turnstile solve task
 
 Minimum required parameters:
 
@@ -49,54 +49,92 @@ Typical response:
 
 ### Optional parameters
 
-Some Turnstile integrations also use extra widget context.
+- `action`: Turnstile action parameter
+- `cdata`: Turnstile cdata payload
+- `proxy`: Per-task proxy override (`http://user:pass@ip:port` or `socks5://ip:port`)
 
-- `action`
-- `cdata`
-- `proxy` - per-task proxy override. This does not require the server-level `--proxy` flag.
+Example with action and proxy:
+
+```bash
+curl "http://127.0.0.1:5000/turnstile?url=https://example.com/login&sitekey=0x4AAAAAAA&action=login&proxy=socks5://127.0.0.1:9050"
+```
+
+## 2. Create a Cloudflare Clearance solve task
+
+Parameters:
+
+- `url` (Required): Target URL protected by Cloudflare Interstitials / IUAM.
+- `proxy` (Optional): Per-task proxy override.
 
 Example:
 
 ```bash
-curl "http://127.0.0.1:5000/turnstile?url=https://example.com/login&sitekey=0x4AAAAAAA&action=login&cdata=session123"
+curl "http://127.0.0.1:5000/cf_clearance?url=https://protected-site.com"
 ```
 
-Example with a per-task proxy:
+Typical response:
+
+```json
+{
+  "errorId": 0,
+  "taskId": "9a38f712-4123-4f81-a901-7cba12398451"
+}
+```
+
+## 3. Poll the result
 
 ```bash
-curl "http://127.0.0.1:5000/turnstile?url=https://example.com/login&sitekey=0x4AAAAAAA&proxy=socks5://127.0.0.1:9050"
+curl "http://127.0.0.1:5000/result?id=<taskId>"
 ```
 
-## Poll the result
+### Possible responses:
 
-```bash
-curl "http://127.0.0.1:5000/result?id=d2cbb257-9c37-4f9c-9bc7-1eaee72d96a8"
-```
-
-Possible responses:
-
-### Still processing
-
+#### A. Still processing
 ```json
 {
   "status": "processing"
 }
 ```
 
-### Ready
-
+#### B. Turnstile Ready
 ```json
 {
   "errorId": 0,
   "status": "ready",
   "solution": {
-    "token": "0.xxxxx"
+    "token": "0.xxxxx",
+    "elapsed_time": 2.14
   }
 }
 ```
 
-### Failed
+#### C. CF Clearance Ready
+```json
+{
+  "errorId": 0,
+  "status": "ready",
+  "solution": {
+    "cf_clearance": "07vN210...",
+    "cookies": [
+      {
+        "name": "cf_clearance",
+        "value": "07vN210...",
+        "domain": ".protected-site.com",
+        "path": "/"
+      }
+    ],
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)...",
+      "Accept-Language": "en-US,en;q=0.9",
+      "sec-ch-ua": "\"Google Chrome\";v=\"139\"..."
+    },
+    "elapsed_time": 4.12
+  }
+}
+```
 
+#### D. Failed
 ```json
 {
   "errorId": 1,
@@ -104,66 +142,6 @@ Possible responses:
   "errorDescription": "Workers could not solve the Captcha"
 }
 ```
-
-## Bash polling example
-
-```bash
-BASE_URL="http://127.0.0.1:5000"
-TASK_ID=$(curl -s "$BASE_URL/turnstile?url=https://example.com&sitekey=0x4AAAAAAA" | python -c 'import sys, json; print(json.load(sys.stdin)["taskId"])')
-
-while true; do
-  RESPONSE=$(curl -s "$BASE_URL/result?id=$TASK_ID")
-  echo "$RESPONSE"
-
-  STATUS=$(printf '%s' "$RESPONSE" | python - <<'PY'
-import json, sys
-payload = json.load(sys.stdin)
-print(payload.get("status") or payload.get("errorCode") or "")
-PY
-)
-
-  if [ "$STATUS" = "ready" ] || [ "$STATUS" = "ERROR_CAPTCHA_UNSOLVABLE" ]; then
-    break
-  fi
-
-  sleep 2
-done
-```
-
-## Configuration patterns
-
-### Optional address or email pre-submit flow
-
-If the target page shows an input named `address` before the Turnstile widget appears:
-
-```bash
-cp .env.example .env
-```
-
-Set:
-
-```dotenv
-TURNSTILE_LOGIN_ADDRESS=you@example.com
-```
-
-The solver will try to fill the `address` field and submit the form before looking for the widget.
-
-### Optional verification trigger click
-
-The implementation also includes a helper path for pages that require clicking a verification button before Turnstile appears. Supported trigger patterns are source-driven and intentionally limited to the selectors already implemented in `api_solver.py`.
-
-### Proxy list
-
-If you start the server with `--proxy`, create a local `proxies.txt` file first. If you pass `proxy=` in the `/turnstile` request, that request-level proxy overrides the file selection for that task only.
-
-```text
-ip:port
-ip:port:username:password
-scheme://ip:port
-scheme://username:password@ip:port
-```
-
-The same formats are accepted by the request-level `proxy` parameter. Proxy credentials are redacted in debug logs and only recorded as `provided` in task metadata.
 
 ## CLI reference
 
@@ -178,16 +156,5 @@ The same formats are accepted by the request-level `proxy` parameter. Proxy cred
 | `--browser` | Pin a specific browser profile family from `browser_configs.py` |
 | `--version` | Pin a specific browser version from `browser_configs.py` |
 | `--useragent` | Override the user-agent string manually |
-| `--host` | Bind address |
-| `--port` | Listening port |
-
-## Operational notes
-
-- The first requests can be slower while workers initialize.
-- Solve tasks are stored in local SQLite state via `results.db` and excluded from git.
-- The API is asynchronous, but the solve result is still a polling flow rather than a websocket or callback flow.
-- Browser installation happens outside `pip install -r requirements.txt`.
-
-## Scope note
-
-This is a public-safe showcase repo. It documents the local API contract and code behavior, but it does not include the owner's live deployment, reverse proxy, or private target-specific runtime state.
+| `--host` | Bind address (Default: `0.0.0.0`) |
+| `--port` | Listening port (Default: `5072`) |
